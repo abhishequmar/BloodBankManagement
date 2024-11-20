@@ -3,8 +3,6 @@ using BloodBankManagement.Models;
 using System.Text.RegularExpressions;
 
 
-//Working
-
 namespace BloodBankManagement.Controllers
 {
     [ApiController]
@@ -76,7 +74,7 @@ namespace BloodBankManagement.Controllers
             // Generate a new integer Id
             entry.Id = _id;
             _id=_id+1;
-            Console.WriteLine(_id);
+            // Console.WriteLine(_id);
 
             // Add entry to the list
             _bloodBankEntries.Add(entry);
@@ -109,58 +107,53 @@ namespace BloodBankManagement.Controllers
         [HttpPut("{id}")]
         public IActionResult Update(int id, [FromBody] BloodBankEntry updatedEntry)
         {
-            // Validate DonorName
+            // DonorName Validation
             if (string.IsNullOrWhiteSpace(updatedEntry.DonorName))
                 return BadRequest("DonorName is required and cannot be empty.");
 
-            // Ensure the name is between 3 and 100 characters
             if (updatedEntry.DonorName.Length < 3 || updatedEntry.DonorName.Length > 100)
                 return BadRequest("DonorName must be between 3 and 100 characters.");
 
-            // Ensure the name consists of 1 or 2 words (first name and last name)
-            var namePattern = @"^[A-Za-z]+(?:\s[A-Za-z]+)?$";  // Matches 1 or 2 words with letters only
+
+            var namePattern = @"^[A-Za-z]+(?:\s[A-Za-z]+)?$"; 
             if (!Regex.IsMatch(updatedEntry.DonorName, namePattern))
-                return BadRequest("DonorName must contain one or two words (first and last name).");
+                return BadRequest("DonorName must contain one or two words (first and last name) without extra spaces.");
 
 
-            // Validate Age
+            // Age Validation
             if (updatedEntry.Age < 18 || updatedEntry.Age > 65)
                 return BadRequest("Age must be between 18 and 65.");
 
-            // Validate BloodType
-            var validBloodTypes = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
+            // BloodType Validation
             if (!validBloodTypes.Contains(updatedEntry.BloodType))
                 return BadRequest($"BloodType must be one of the following: {string.Join(", ", validBloodTypes)}.");
 
-            // Validate ContactInfo
+            // ContactInfo Validation
             if (string.IsNullOrWhiteSpace(updatedEntry.ContactInfo) || !Regex.IsMatch(updatedEntry.ContactInfo, @"^\d{10}$"))
                 return BadRequest("ContactInfo is required and must be a valid 10-digit phone number.");
 
-            // Validate Quantity
+            // Quantity Validation
             if (updatedEntry.Quantity <= 0 || updatedEntry.Quantity > 500)
                 return BadRequest("Quantity must be a positive value and not exceed 500 ml.");
 
-            // Validate CollectionDate
+            // CollectionDate Validation
             if (updatedEntry.CollectionDate == default || updatedEntry.CollectionDate > DateTime.Now)
                 return BadRequest("CollectionDate must be a valid date and cannot be in the future.");
 
-            // Validate ExpirationDate
+            // ExpirationDate Validation
             if (updatedEntry.ExpirationDate == default || updatedEntry.ExpirationDate <= updatedEntry.CollectionDate)
                 return BadRequest("ExpirationDate must be a valid date and later than the CollectionDate.");
 
-            // Validate Status
-            var validStatuses = new[] { "Available", "Requested", "Expired" };
+            // Status Validation
             if (!validStatuses.Contains(updatedEntry.Status))
                 return BadRequest($"Status must be one of the following: {string.Join(", ", validStatuses)}.");
 
-            // Find the entry to update
             var entry = _bloodBankEntries.FirstOrDefault(e => e.Id == id);
             if (entry == null)
             {
                 return NotFound("Entry not found.");
             }
 
-            // Update fields
             entry.DonorName = updatedEntry.DonorName;
             entry.Age = updatedEntry.Age;
             entry.BloodType = updatedEntry.BloodType;
@@ -194,7 +187,7 @@ namespace BloodBankManagement.Controllers
         [Route("pagination")]
         public IActionResult GetPaginated(int page = 1, int size = 10)
         {
-            // Validate the page number
+            // page number Validation
             if (page < 1)
             {
                 return BadRequest("Page number must be greater than or equal to 1.");
@@ -231,23 +224,20 @@ namespace BloodBankManagement.Controllers
         [HttpGet("search/status")]
         public IActionResult SearchByStatus([FromQuery] string status)
         {
-            // List of valid statuses
-            
 
-            // Validate that status is provided
+
+            // status Validation
             if (string.IsNullOrEmpty(status))
                 return BadRequest("Status is required.");
 
-            // Validate the status value
+
             if (!validStatuses.Contains(status, StringComparer.OrdinalIgnoreCase))
                 return BadRequest($"Invalid status. Valid statuses are: {string.Join(", ", validStatuses)}.");
 
-            // Search for entries with the specified status
             var result = _bloodBankEntries
                 .Where(e => e.Status.Equals(status, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            // Return response based on the result
             if (!result.Any())
                 return NotFound("No entries found for the specified status.");
 
@@ -259,29 +249,24 @@ namespace BloodBankManagement.Controllers
         [HttpGet("search/donorname")]
         public IActionResult SearchByDonorName([FromQuery] string donorName)
         {
-            // Validate donor name
+            // donor name Validation
             if (string.IsNullOrEmpty(donorName))
                 return BadRequest("Donor name is required.");
 
-            // Check if donor name length is within valid range
             if (donorName.Length < 2 || donorName.Length > 100)
                 return BadRequest("Donor name must be between 2 and 100 characters.");
 
-            // Check if donor name contains only valid characters (e.g., letters, spaces, hyphens)
             if (!Regex.IsMatch(donorName, @"^[a-zA-Z\s-]+$"))
                 return BadRequest("Donor name can only contain letters, spaces, and hyphens.");
 
-            // Check if the name contains only one or two words (first name and last name)
             var nameParts = donorName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             if (nameParts.Length < 2 || nameParts.Length > 2)
                 return BadRequest("Donor name must contain exactly two words (first name and last name).");
 
-            // Perform the search for donor name
             var result = _bloodBankEntries
                 .Where(e => e.DonorName.Contains(donorName, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            // Return results or not found
             if (!result.Any())
                 return NotFound("No donors found with the specified name.");
 
@@ -308,22 +293,19 @@ namespace BloodBankManagement.Controllers
                 result = result.Where(e => e.BloodType.Equals(bloodType, StringComparison.OrdinalIgnoreCase));
 
 
-            // Validate the status value
+            // status Validation
             if (!string.IsNullOrEmpty(status) && !validStatuses.Contains(status, StringComparer.OrdinalIgnoreCase))
                 return BadRequest($"Invalid status. Valid statuses are: {string.Join(", ", validStatuses)}.");
             if (!string.IsNullOrEmpty(status))
                 result = result.Where(e => e.Status.Equals(status, StringComparison.OrdinalIgnoreCase));
 
 
-            // Check if donor name length is within valid range
             if (!string.IsNullOrEmpty(donorName) && donorName.Length < 2 || donorName.Length > 100)
                 return BadRequest("Donor name must be between 2 and 100 characters.");
 
-            // Check if donor name contains only valid characters (e.g., letters, spaces, hyphens)
             if (!string.IsNullOrEmpty(donorName) && !Regex.IsMatch(donorName, @"^[a-zA-Z\s-]+$"))
                 return BadRequest("Donor name can only contain letters, spaces, and hyphens.");
 
-            // Check if the name contains only one or two words (first name and last name)
             var nameParts = donorName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             if (!string.IsNullOrEmpty(donorName) && nameParts.Length < 2 || nameParts.Length > 2)
                 return BadRequest("Donor name must contain exactly two words (first name and last name).");
@@ -342,14 +324,11 @@ namespace BloodBankManagement.Controllers
             [FromQuery] string sortBy,
             [FromQuery] bool ascending = true)
         {
-            // Validate if sortBy is provided and is valid
             if (string.IsNullOrEmpty(sortBy))
                 return BadRequest("The sortBy parameter is required.");
 
-            // Define valid sorting options
             var validSortByOptions = new HashSet<string> { "bloodtype", "collectiondate" };
 
-            // Normalize the sortBy to lowercase and check if it's a valid option
             sortBy = sortBy.ToLower();
 
             if (!validSortByOptions.Contains(sortBy))
@@ -357,7 +336,6 @@ namespace BloodBankManagement.Controllers
 
             var result = _bloodBankEntries.AsQueryable();
 
-            // Apply sorting based on the sortBy parameter
             result = sortBy switch
             {
                 "bloodtype" => ascending ? result.OrderBy(e => e.BloodType) : result.OrderByDescending(e => e.BloodType),
@@ -365,7 +343,6 @@ namespace BloodBankManagement.Controllers
                 _ => result
             };
 
-            // Check if no entries are found
             if (!result.Any())
                 return NotFound("No entries available for sorting.");
 

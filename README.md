@@ -1,4 +1,4 @@
-# Blood Bank Management System API
+# Blood Bank Management
 
 ## Overview
 
@@ -15,13 +15,7 @@ The Blood Bank Management System API is a RESTful web service designed for manag
 - Paginated listing of entries.
 - Search functionality for blood type, donor name, and status.
 
----
 
-## Technologies Used
-
-- **Framework**: ASP.NET Core
-- **Language**: C#
-- **Data Storage**: In-memory collection
 
 ---
 
